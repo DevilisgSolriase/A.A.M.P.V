@@ -1,4 +1,3 @@
-#include <IRremote.h>
 #include <Servo.h>
 
 // Pin Definitions
@@ -26,8 +25,7 @@ bool pit_detected = false;
 
 // Global Variables
 Servo myservo;
-IRrecv irrecv(pinIR);
-decode_results results;
+
 volatile int DL, DM, DR;
 unsigned char pwm_val = 150;
 
@@ -142,7 +140,6 @@ void setup() {
   DM = 0;
   DR = 0;
   Serial.begin(9600);
-  irrecv.enableIRIn();
   myservo.write(90);
 }
 
