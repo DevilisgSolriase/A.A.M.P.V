@@ -1,4 +1,3 @@
-#include <IRremote.h>
 #include <Servo.h>
 
 // Pin Definitions
@@ -26,10 +25,9 @@ bool pit_detected = false;
 
 // Global Variables
 Servo myservo;
-IRrecv irrecv(pinIR);
-decode_results results;
+Servo camera_servo;
 volatile int DL, DM, DR;
-unsigned char pwm_val = 150;
+unsigned char pwm_val = 100;
 
 // Timing Variables for Non-blocking Operations
 unsigned long previousServoMillis = 0;
@@ -58,19 +56,27 @@ void react(int pos, int DM) {
   if (pos <= 90) {  // Object detected in the left half of the servo sweep
     Serial.println("Obstacle on the left, turning right.");
     turnR();  // Turn right to avoid obstacle
-    Set_Speed(200);  // Speed up to turn
+    Set_Speed(175);  // Speed up to turn
     delay(200);  // Allow the robot to turn
     advance();  // Move forward after turning
   } else if (pos > 90) {  // Object detected in the right half of the servo sweep
     Serial.println("Obstacle on the right, turning left.");
     turnL();  // Turn left to avoid obstacle
-    Set_Speed(200);  // Speed up to turn
+    Set_Speed(175);  // Speed up to turn
     delay(200);  // Allow the robot to turn
     advance();  // Move forward after turning
   }
 }
 
-
+void cam_move(){
+  int pos = 45;
+  const int step =4;
+  
+  for (pos =45; pos <= 135; pos += step){
+    camera_servo.write(pos);
+  }
+   for (pos = 135; pos >= 45; pos -= step) {}
+}
 
 void auto_move() {
   static int pos = 45;  // Starting servo position (middle)
@@ -127,6 +133,7 @@ void Detect_obstacle_distance() {
 
 void setup() {
   myservo.attach(A2);
+  camera_servo.attach(A3);
   pinMode(A1, OUTPUT);
   pinMode(A0, INPUT);
   pinMode(pinLB, OUTPUT);
@@ -142,7 +149,7 @@ void setup() {
   DM = 0;
   DR = 0;
   Serial.begin(9600);
-  irrecv.enableIRIn();
+  //irrecv.enableIRIn();
   myservo.write(90);
 }
 
@@ -153,15 +160,15 @@ void key_Control(char input) {
       advance();  // Move forward
       break;
     case 's':
-      Set_Speed(pwm_val);
+      Set_Speed(150);
       back();  // Move backward
       break;
     case 'a':
-      Set_Speed(pwm_val);
+      Set_Speed(175);
       turnL();  // Turn left
       break;
     case 'd':
-      Set_Speed(pwm_val);
+      Set_Speed(175);
       turnR();  // Turn right
       break;
     case 'x':
@@ -208,21 +215,21 @@ void loop() {
 
     // Switch between modes when 'm' is pressed
     if (input == 'm') {
-      if (mode == '1') {
-        mode = '2';  // Switch to Autonomous mode
+      if (mode == '2') {
+        mode = '1';  // Switch to Autonomous mode
         Serial.println("Switched to Autonomous Mode");
       } else {
-        mode = '1';  // Switch to IR control mode
+        mode = '2';  // Switch to IR control mode
         Serial.println("Switched to Manual Mode");
       }
     }
 
-    if (mode == '1') {
+    if (mode == '2') {
       key_Control(input);  // Manual Mode controls
     }
   }
 
-  if (mode == '2') {
+  if (mode == '1') {
     // Autonomous Mode (non-blocking)
     auto_move();
   }
